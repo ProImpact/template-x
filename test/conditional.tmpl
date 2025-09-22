@@ -1,0 +1,12 @@
+
+{{ if .Name == "anthony" }}
+
+
+{{ if .Name == "anthony" and .Status == false }}
+
+
+{{ if and(eq(.Name "anthony") eq(.Status false)) }}
+
+
+
+{{ if (.Name == "anthony" or .User == "jose") and .Status == false }}
