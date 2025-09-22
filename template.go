@@ -11,34 +11,44 @@ import (
 )
 
 type templateParse struct {
-	buffer       *bufio.ReadWriter
+	buffer       *bufio.Reader
 	templateName string
 }
 
 func NewTemplateParse(filePath string) (*templateParse, error) {
+	file := filepath.Base(filePath)
+	templateName, _ := strings.CutSuffix(file, filepath.Ext(file))
+	templateName, _ = strings.CutPrefix(templateName, "./")
+	templateName, _ = strings.CutPrefix(templateName, ".\\")
+
 	f, err := os.Open(filePath)
 	if err != nil {
 		return nil, err
 	}
 	defer f.Close()
+
 	t := new(templateParse)
-	templateName := fmt.Sprintf("{{ define \"%s\" }}\n", t.templateName)
-	buff := bytes.NewBuffer([]byte(templateName))
-	_, err = io.Copy(buff, f)
+	t.templateName = templateName
+
+	var buff bytes.Buffer
+
+	_, err = buff.WriteString(fmt.Sprintf("{{ define \"%s\" }}\n", t.templateName))
 	if err != nil {
 		return nil, err
 	}
-	_, err = buff.Write([]byte("\n{{ end }}"))
+
+	_, err = io.Copy(&buff, f)
 	if err != nil {
 		return nil, err
 	}
-	io.ReadAll(buff)
-	t.buffer = bufio.NewReadWriter(bufio.NewReader(buff), bufio.NewWriter(buff))
-	file := filepath.Base(filePath)
-	file, _ = strings.CutSuffix(filePath, filepath.Ext(file))
-	file, _ = strings.CutPrefix(file, "./")
-	file, _ = strings.CutPrefix(file, ".\\")
-	t.templateName = file
+
+	_, err = buff.WriteString("\n{{ end }}")
+	if err != nil {
+		return nil, err
+	}
+
+	t.buffer = bufio.NewReader(&buff)
+
 	return t, nil
 }
 

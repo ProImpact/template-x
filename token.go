@@ -25,6 +25,7 @@ const (
 	DOT                     // .
 	EQUALS                  // =
 	KEYWORD
+	LINE
 	ERROR
 	EOF
 )
@@ -33,24 +34,26 @@ type Keyword = string
 
 const (
 	IF = iota
-	ELSE_IF
 	ELSE
 	FOR
 	IN
 	OR
 	AND
 	VAR
+	DEFINE
+	TEMPLATE
 )
 
 var Keywords = []Keyword{
-	IF:      "if",
-	ELSE_IF: "else if",
-	ELSE:    "else",
-	FOR:     "for",
-	IN:      "in",
-	OR:      "or",
-	AND:     "and",
-	VAR:     "var",
+	IF:       "if",
+	ELSE:     "else",
+	FOR:      "for",
+	IN:       "in",
+	OR:       "or",
+	AND:      "and",
+	VAR:      "var",
+	DEFINE:   "define",
+	TEMPLATE: "template",
 }
 
 type Node struct {
@@ -60,6 +63,8 @@ type Node struct {
 
 func (t TokenType) String() string {
 	switch t {
+	case LINE:
+		return "LINE"
 	case TEXT:
 		return "TEXT"
 	case LBRACE:

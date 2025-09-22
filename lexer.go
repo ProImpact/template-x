@@ -104,10 +104,18 @@ func (t *templateParse) readIdentifierToken(char rune, nodes *[]*Node) error {
 		char, _, err := t.buffer.ReadRune()
 		if err != nil {
 			if errors.Is(err, io.EOF) {
-				*nodes = append(*nodes, &Node{
-					NodeType: INDENTIFIER,
-					Lexema:   textIdentifier.String(),
-				})
+				if IsKeyword(textIdentifier.String()) {
+					*nodes = append(*nodes, &Node{
+						NodeType: KEYWORD,
+						Lexema:   textIdentifier.String(),
+					})
+
+				} else {
+					*nodes = append(*nodes, &Node{
+						NodeType: INDENTIFIER,
+						Lexema:   textIdentifier.String(),
+					})
+				}
 				t.appendEOF(nodes)
 				return nil
 			}
@@ -120,10 +128,18 @@ func (t *templateParse) readIdentifierToken(char rune, nodes *[]*Node) error {
 			}
 		} else {
 			_ = t.buffer.UnreadRune()
-			*nodes = append(*nodes, &Node{
-				NodeType: INDENTIFIER,
-				Lexema:   textIdentifier.String(),
-			})
+			if IsKeyword(textIdentifier.String()) {
+				*nodes = append(*nodes, &Node{
+					NodeType: KEYWORD,
+					Lexema:   textIdentifier.String(),
+				})
+
+			} else {
+				*nodes = append(*nodes, &Node{
+					NodeType: INDENTIFIER,
+					Lexema:   textIdentifier.String(),
+				})
+			}
 			break
 		}
 	}
@@ -142,6 +158,21 @@ func (t *templateParse) handleSpecialCharacters(char rune, nodes *[]*Node) error
 			NodeType: RPARENT,
 			Lexema:   string(char),
 		})
+	case '(':
+		*nodes = append(*nodes, &Node{
+			NodeType: LPARENT,
+			Lexema:   string(char),
+		})
+	case '|':
+		*nodes = append(*nodes, &Node{
+			NodeType: LINE,
+			Lexema:   string(char),
+		})
+	case '}':
+		*nodes = append(*nodes, &Node{
+			NodeType: RBRACE,
+			Lexema:   string(char),
+		})
 	case '[':
 		*nodes = append(*nodes, &Node{
 			NodeType: LCORCH,
@@ -158,7 +189,7 @@ func (t *templateParse) handleSpecialCharacters(char rune, nodes *[]*Node) error
 			Lexema:   string(char),
 		})
 	case '"':
-		textBuffer := bytes.NewBuffer([]byte(""))
+		textBuffer := bytes.NewBuffer([]byte("\""))
 		for {
 			char, _, err := t.buffer.ReadRune()
 			if err != nil {
@@ -194,7 +225,7 @@ func (t *templateParse) handleSpecialCharacters(char rune, nodes *[]*Node) error
 		if char == '=' {
 			*nodes = append(*nodes, &Node{
 				NodeType: DOBLE_EQUALS,
-				Lexema:   string(char),
+				Lexema:   string("=="),
 			})
 			return nil
 		}
@@ -283,4 +314,3 @@ func (t *templateParse) handleSpecialCharacters(char rune, nodes *[]*Node) error
 	}
 	return nil
 }
-
