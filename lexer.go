@@ -31,26 +31,29 @@ func (t *templateParse) Next() (*Node, error) {
 			continue
 		}
 		if unicode.IsDigit(char) {
-			if num, err := t.readNumberToken(char); err != nil {
+			num, err := t.readNumberToken(char)
+			if err != nil {
 				if !errors.Is(err, io.EOF) {
 					return nil, err
 				}
-				return &Node{
-					NodeType: NUMBER,
-					Lexema:   fmt.Sprintf("%d", num),
-				}, nil
 			}
-			continue
+			return &Node{
+				NodeType: NUMBER,
+				Lexema:   fmt.Sprintf("%d", num),
+			}, nil
 		}
 		if unicode.IsLetter(char) {
-			if token, err := t.readIdentifierToken(char); err != nil {
-				return token, err
+			token, err := t.readIdentifierToken(char)
+			if err != nil {
+				return nil, err
 			}
-			continue
+			return token, nil
 		}
-		if token, err := t.handleSpecialCharacters(char); err != nil {
-			return token, err
+		token, err := t.handleSpecialCharacters(char)
+		if err != nil {
+			return nil, err
 		}
+		return token, nil
 	}
 }
 
@@ -153,6 +156,26 @@ func (t *templateParse) handleSpecialCharacters(char rune) (*Node, error) {
 	case '|':
 		return &Node{
 			NodeType: LINE,
+			Lexema:   string(char),
+		}, nil
+	case '/':
+		return &Node{
+			NodeType: SLASH,
+			Lexema:   string(char),
+		}, nil
+	case '*':
+		return &Node{
+			NodeType: ASTERISIC,
+			Lexema:   string(char),
+		}, nil
+	case '$':
+		return &Node{
+			NodeType: DOLLAR,
+			Lexema:   string(char),
+		}, nil
+	case ':':
+		return &Node{
+			NodeType: COLON,
 			Lexema:   string(char),
 		}, nil
 	case '}':

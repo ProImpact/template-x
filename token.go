@@ -7,6 +7,10 @@ type TokenType int
 const (
 	_             TokenType = iota
 	TEXT                    // "name"
+	SLASH                   // /
+	ASTERISIC               // *
+	DOLLAR                  // $
+	COLON                   // :
 	LBRACE                  // {
 	RBRACE                  // }
 	LPARENT                 // (
@@ -42,6 +46,11 @@ const (
 	VAR
 	DEFINE
 	TEMPLATE
+	END
+	FALSE
+	TRUE
+	WITH
+	BLOCK
 )
 
 var Keywords = []Keyword{
@@ -54,6 +63,11 @@ var Keywords = []Keyword{
 	VAR:      "var",
 	DEFINE:   "define",
 	TEMPLATE: "template",
+	END:      "end",
+	FALSE:    "false",
+	TRUE:     "true",
+	WITH:     "with",
+	BLOCK:    "block",
 }
 
 type Node struct {
@@ -65,6 +79,10 @@ func (t TokenType) String() string {
 	switch t {
 	case LINE:
 		return "LINE"
+	case SLASH:
+		return "SLASH"
+	case ASTERISIC:
+		return "ASTERISIC"
 	case TEXT:
 		return "TEXT"
 	case LBRACE:
@@ -107,6 +125,10 @@ func (t TokenType) String() string {
 		return "ERROR"
 	case EOF:
 		return "EOF"
+	case COLON:
+		return "COLON"
+	case DOLLAR:
+		return "DOLLAR"
 	default:
 		return "UNKNOWN"
 	}

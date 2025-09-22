@@ -8,7 +8,7 @@ import (
 )
 
 func TestGetTokens(t *testing.T) {
-	tmpl, err := templatex.NewTemplateParse("./test/conditional.tmpl")
+	tmpl, err := templatex.NewTemplateParse("./test/all.tmpl")
 	if err != nil {
 		log.Fatal(err)
 	}
