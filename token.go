@@ -58,6 +58,55 @@ type Node struct {
 	Lexema   string
 }
 
+func (t TokenType) String() string {
+	switch t {
+	case TEXT:
+		return "TEXT"
+	case LBRACE:
+		return "LBRACE"
+	case RBRACE:
+		return "RBRACE"
+	case LPARENT:
+		return "LPARENT"
+	case RPARENT:
+		return "RPARENT"
+	case LCORCH:
+		return "LCORCH"
+	case RCORCH:
+		return "RCORCH"
+	case INDENTIFIER:
+		return "INDENTIFIER"
+	case NUMBER:
+		return "NUMBER"
+	case DOBLE_EQUALS:
+		return "DOBLE_EQUALS"
+	case NOT_EQUALS:
+		return "NOT_EQUALS"
+	case GRATER:
+		return "GRATER"
+	case GRATER_EQUALS:
+		return "GRATER_EQUALS"
+	case LOWER_EQUALS:
+		return "LOWER_EQUALS"
+	case LOWER:
+		return "LOWER"
+	case COMMA:
+		return "COMMA"
+	case DOT:
+		return "DOT"
+	case EQUALS:
+		return "EQUALS"
+	case KEYWORD:
+		return "KEYWORD"
+	case ERROR:
+		return "ERROR"
+	case EOF:
+		return "EOF"
+	default:
+		return "UNKNOWN"
+	}
+}
+
 func IsKeyword(keyword string) bool {
 	return slices.Contains(Keywords, keyword)
 }
