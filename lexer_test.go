@@ -12,11 +12,15 @@ func TestGetTokens(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	tokens, err := tmpl.Parse()
-	if err != nil {
-		log.Fatal(err)
-	}
-	for _, token := range tokens {
+	for {
+		token, err := tmpl.Next()
+		if err != nil {
+			log.Fatal(err)
+		}
+		if token.NodeType == templatex.EOF {
+			t.Logf("%+v \n", token)
+			break
+		}
 		t.Logf("%+v \n", token)
 	}
 }

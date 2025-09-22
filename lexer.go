@@ -11,18 +11,18 @@ import (
 
 var ErrInvalidToken = errors.New("invalid token")
 
-func (t *templateParse) Parse() ([]*Node, error) {
-	var nodes []*Node
+func (t *templateParse) Next() (*Node, error) {
 	lineNumber := 0
 	indexInline := 0
 
-lopp:
 	for {
 		char, _, err := t.buffer.ReadRune()
 		if err != nil {
 			if errors.Is(err, io.EOF) {
-				t.appendEOF(&nodes)
-				break lopp
+				return &Node{
+					NodeType: EOF,
+					Lexema:   "0",
+				}, nil
 			}
 			return nil, fmt.Errorf("error reading the rune: %w", err)
 		}
@@ -31,30 +31,27 @@ lopp:
 			continue
 		}
 		if unicode.IsDigit(char) {
-			if err := t.readNumberToken(char, &nodes); err != nil {
-				return nil, err
+			if num, err := t.readNumberToken(char); err != nil {
+				if !errors.Is(err, io.EOF) {
+					return nil, err
+				}
+				return &Node{
+					NodeType: NUMBER,
+					Lexema:   fmt.Sprintf("%d", num),
+				}, nil
 			}
 			continue
 		}
 		if unicode.IsLetter(char) {
-			if err := t.readIdentifierToken(char, &nodes); err != nil {
-				return nil, err
+			if token, err := t.readIdentifierToken(char); err != nil {
+				return token, err
 			}
 			continue
 		}
-		if err := t.handleSpecialCharacters(char, &nodes); err != nil {
-			return nil, err
+		if token, err := t.handleSpecialCharacters(char); err != nil {
+			return token, err
 		}
 	}
-
-	return nodes, nil
-}
-
-func (t *templateParse) appendEOF(nodes *[]*Node) {
-	*nodes = append(*nodes, &Node{
-		NodeType: EOF,
-		Lexema:   string("0"),
-	})
 }
 
 func (t *templateParse) handleWhitespace(char rune, lineNumber, indexInline *int) {
@@ -66,251 +63,237 @@ func (t *templateParse) handleWhitespace(char rune, lineNumber, indexInline *int
 	}
 }
 
-func (t *templateParse) readNumberToken(char rune, nodes *[]*Node) error {
+func (t *templateParse) readNumberToken(initialChar rune) (int, error) {
 	number := 0
-	nm, _ := strconv.Atoi(string(char))
+	nm, _ := strconv.Atoi(string(initialChar))
 	number += nm
 	for {
 		char, _, err := t.buffer.ReadRune()
 		if err != nil {
 			if errors.Is(err, io.EOF) {
-				*nodes = append(*nodes, &Node{
-					NodeType: NUMBER,
-					Lexema:   fmt.Sprintf("%d", number),
-				})
-				t.appendEOF(nodes)
-				return nil
+				return number, t.buffer.UnreadRune()
 			}
-			return fmt.Errorf("error reading the rune: %w", err)
+			return -1, fmt.Errorf("error reading the rune: %w", err)
 		}
 		if unicode.IsDigit(char) {
 			nm, _ := strconv.Atoi(string(char))
 			number = number*10 + nm
 		} else {
-			_ = t.buffer.UnreadRune()
-			*nodes = append(*nodes, &Node{
-				NodeType: NUMBER,
-				Lexema:   fmt.Sprintf("%d", number),
-			})
+			err = t.buffer.UnreadRune()
+			if err != nil {
+				return -1, err
+			}
 			break
 		}
 	}
-	return nil
+	return number, nil
 }
 
-func (t *templateParse) readIdentifierToken(char rune, nodes *[]*Node) error {
-	textIdentifier := bytes.NewBuffer([]byte(string(char)))
+func (t *templateParse) readIdentifierToken(initialChar rune) (*Node, error) {
+	textIdentifier := bytes.NewBuffer([]byte(string(initialChar)))
 	for {
 		char, _, err := t.buffer.ReadRune()
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				if IsKeyword(textIdentifier.String()) {
-					*nodes = append(*nodes, &Node{
+					return &Node{
 						NodeType: KEYWORD,
 						Lexema:   textIdentifier.String(),
-					})
+					}, nil
 
 				} else {
-					*nodes = append(*nodes, &Node{
+					return &Node{
 						NodeType: INDENTIFIER,
 						Lexema:   textIdentifier.String(),
-					})
+					}, nil
 				}
-				t.appendEOF(nodes)
-				return nil
 			}
-			return fmt.Errorf("error reading the rune: %w", err)
+			return nil, fmt.Errorf("error reading the rune: %w", err)
 		}
 		if unicode.IsLetter(char) || char == '_' {
 			_, err = textIdentifier.WriteRune(char)
 			if err != nil {
-				return fmt.Errorf("error writing rune: %w", err)
+				return nil, fmt.Errorf("error writing rune: %w", err)
 			}
 		} else {
 			_ = t.buffer.UnreadRune()
 			if IsKeyword(textIdentifier.String()) {
-				*nodes = append(*nodes, &Node{
+				return &Node{
 					NodeType: KEYWORD,
 					Lexema:   textIdentifier.String(),
-				})
+				}, nil
 
 			} else {
-				*nodes = append(*nodes, &Node{
+				return &Node{
 					NodeType: INDENTIFIER,
 					Lexema:   textIdentifier.String(),
-				})
+				}, nil
 			}
-			break
 		}
 	}
-	return nil
 }
 
-func (t *templateParse) handleSpecialCharacters(char rune, nodes *[]*Node) error {
+func (t *templateParse) handleSpecialCharacters(char rune) (*Node, error) {
 	switch char {
 	case '.':
-		*nodes = append(*nodes, &Node{NodeType: DOT, Lexema: string(char)})
+		return &Node{NodeType: DOT, Lexema: string(char)}, nil
 	case '{':
-		*nodes = append(*nodes, &Node{NodeType: LBRACE, Lexema: string(char)})
+		return &Node{NodeType: LBRACE, Lexema: string(char)}, nil
 	// Add cases for other special characters
 	case ')':
-		*nodes = append(*nodes, &Node{
+		return &Node{
 			NodeType: RPARENT,
 			Lexema:   string(char),
-		})
+		}, nil
 	case '(':
-		*nodes = append(*nodes, &Node{
+		return &Node{
 			NodeType: LPARENT,
 			Lexema:   string(char),
-		})
+		}, nil
 	case '|':
-		*nodes = append(*nodes, &Node{
+		return &Node{
 			NodeType: LINE,
 			Lexema:   string(char),
-		})
+		}, nil
 	case '}':
-		*nodes = append(*nodes, &Node{
+		return &Node{
 			NodeType: RBRACE,
 			Lexema:   string(char),
-		})
+		}, nil
 	case '[':
-		*nodes = append(*nodes, &Node{
+		return &Node{
 			NodeType: LCORCH,
 			Lexema:   string(char),
-		})
+		}, nil
 	case ']':
-		*nodes = append(*nodes, &Node{
+		return &Node{
 			NodeType: RCORCH,
 			Lexema:   string(char),
-		})
+		}, nil
 	case ',':
-		*nodes = append(*nodes, &Node{
+		return &Node{
 			NodeType: COMMA,
 			Lexema:   string(char),
-		})
+		}, nil
 	case '"':
 		textBuffer := bytes.NewBuffer([]byte("\""))
 		for {
 			char, _, err := t.buffer.ReadRune()
 			if err != nil {
 				if errors.Is(err, io.EOF) {
-					return fmt.Errorf("recheated to the end of a file, expeting close text token '\"")
+					return nil, fmt.Errorf("recheated to the end of a file, expeting close text token '\"")
 				}
-				return fmt.Errorf("error reading the rune: %w", err)
+				return nil, fmt.Errorf("error reading the rune: %w", err)
 			}
 			_, err = textBuffer.WriteRune(char)
 			if err != nil {
-				return fmt.Errorf("err writing to the text buffer: %w", err)
+				return nil, fmt.Errorf("err writing to the text buffer: %w", err)
 			}
 			if char == '"' {
 				break
 			}
 		}
-		*nodes = append(*nodes, &Node{
+		return &Node{
 			NodeType: TEXT,
 			Lexema:   textBuffer.String(),
-		})
+		}, nil
 	case '=':
 		char, _, err := t.buffer.ReadRune()
 		if err != nil {
 			if errors.Is(err, io.EOF) {
-				*nodes = append(*nodes, &Node{
+				err = t.buffer.UnreadRune()
+				if err != nil {
+					return nil, err
+				}
+				return &Node{
 					NodeType: EQUALS,
 					Lexema:   string(char),
-				})
-				t.appendEOF(nodes)
+				}, nil
 			}
-			return fmt.Errorf("error reading the rune: %w", err)
+			return nil, fmt.Errorf("error reading the rune: %w", err)
 		}
 		if char == '=' {
-			*nodes = append(*nodes, &Node{
+			return &Node{
 				NodeType: DOBLE_EQUALS,
 				Lexema:   string("=="),
-			})
-			return nil
+			}, nil
 		}
-		*nodes = append(*nodes, &Node{
+		return &Node{
 			NodeType: EQUALS,
 			Lexema:   string(char),
-		})
+		}, nil
 	case '<':
 		char, _, err := t.buffer.ReadRune()
 		if err != nil {
 			if errors.Is(err, io.EOF) {
-				*nodes = append(*nodes, &Node{
+				err = t.buffer.UnreadRune()
+				if err != nil {
+					return nil, err
+				}
+				return &Node{
 					NodeType: LOWER,
 					Lexema:   string(char),
-				})
-				*nodes = append(*nodes, &Node{
-					NodeType: EOF,
-					Lexema:   string("0"),
-				})
-				return nil
+				}, nil
 			}
-			return fmt.Errorf("error reading the rune: %w", err)
+			return nil, fmt.Errorf("error reading the rune: %w", err)
 		}
 		if char == '=' {
-			*nodes = append(*nodes, &Node{
+			return &Node{
 				NodeType: LOWER_EQUALS,
 				Lexema:   string(char),
-			})
-			return nil
+			}, nil
 		}
-		*nodes = append(*nodes, &Node{
+		return &Node{
 			NodeType: LOWER,
 			Lexema:   string(char),
-		})
+		}, nil
 	case '>':
 		char, _, err := t.buffer.ReadRune()
 		if err != nil {
 			if errors.Is(err, io.EOF) {
-				*nodes = append(*nodes, &Node{
+				err = t.buffer.UnreadRune()
+				if err != nil {
+					return nil, err
+				}
+				return &Node{
 					NodeType: GRATER,
 					Lexema:   string(char),
-				})
-				t.appendEOF(nodes)
-				return nil
+				}, nil
 			}
-			return fmt.Errorf("error reading the rune: %w", err)
+			return nil, fmt.Errorf("error reading the rune: %w", err)
 		}
 		if char == '=' {
-			*nodes = append(*nodes, &Node{
+			return &Node{
 				NodeType: GRATER_EQUALS,
 				Lexema:   string(char),
-			})
+			}, nil
 		}
-		*nodes = append(*nodes, &Node{
+		return &Node{
 			NodeType: GRATER,
 			Lexema:   string(char),
-		})
+		}, nil
 	case '!':
 		char, _, err := t.buffer.ReadRune()
 		if err != nil {
 			if errors.Is(err, io.EOF) {
-				*nodes = append(*nodes, &Node{
+				return &Node{
 					NodeType: ERROR,
 					Lexema:   "expected character = after !",
-				})
-				*nodes = append(*nodes, &Node{
-					NodeType: EOF,
-					Lexema:   string("0"),
-				})
+				}, nil
 			}
-			return fmt.Errorf("error reading the rune: %w", err)
+			return nil, fmt.Errorf("error reading the rune: %w", err)
 		}
 		if char == '=' {
-			*nodes = append(*nodes, &Node{
+			return &Node{
 				NodeType: NOT_EQUALS,
 				Lexema:   string(char),
-			})
-			return nil
+			}, nil
 		}
-		*nodes = append(*nodes, &Node{
+		return &Node{
 			NodeType: ERROR,
 			Lexema:   "expected character =",
-		})
+		}, nil
 	default:
-		return fmt.Errorf("unrecognized character: %c", char)
+		return nil, fmt.Errorf("unrecognized character: %c", char)
 	}
-	return nil
 }
