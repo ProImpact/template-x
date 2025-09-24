@@ -1,4 +1,4 @@
-package templatex
+package lexer
 
 import "slices"
 
@@ -71,8 +71,10 @@ var Keywords = []Keyword{
 }
 
 type Node struct {
-	NodeType TokenType
-	Lexema   string
+	NodeType   TokenType
+	Lexema     string
+	LineIndex  int
+	LineNumber int
 }
 
 func (t TokenType) String() string {
