@@ -38,7 +38,7 @@ func (p *Parser) parseComment() (*ast.Comment, error) {
 	p.lex.Advance()
 	tok = p.lex.Current()
 	if tok.NodeType != lexer.SLASH {
-		return nil, fmt.Errorf("expected \\ found a node %+v", tok)
+		return nil, fmt.Errorf("expected / found a node %+v", tok)
 	}
 	return node, nil
 }
