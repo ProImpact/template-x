@@ -27,6 +27,7 @@ func (p *Parser) parseComment() (*ast.Comment, error) {
 		if tok.NodeType == lexer.INDENTIFIER || tok.NodeType == lexer.KEYWORD {
 			node.Words = append(node.Words, ast.NewWordNode(tok.Lexema))
 			p.lex.Advance()
+			tok = p.lex.Current()
 			continue
 		}
 		return nil, fmt.Errorf("expected a IDENTIFIER or a KEYWORD found a node %+v", tok)
