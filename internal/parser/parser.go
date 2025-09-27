@@ -9,7 +9,7 @@ import (
 
 type Parser struct {
 	lex   *lexer.Lexer
-	Nodes []ast.Node
+	Nodes []ast.Node `json:"nodes"`
 }
 
 func NewParser(filePath string, addInclude bool) *Parser {

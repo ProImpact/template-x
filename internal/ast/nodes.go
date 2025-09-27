@@ -1,6 +1,7 @@
 package ast
 
 import (
+	"encoding/json"
 	"fmt"
 )
 
@@ -38,10 +39,11 @@ type Node interface {
 	Type() NodeType
 	String() string
 	Accept(visitor Visitor) any
+	json.Marshaler
 }
 
 type BaseNode struct {
-	NType NodeType
+	NType NodeType `json:"n_type,omitempty"`
 }
 
 func (b *BaseNode) Type() NodeType {
@@ -49,8 +51,8 @@ func (b *BaseNode) Type() NodeType {
 }
 
 type Program struct {
-	BaseNode
-	Declarations []Node
+	BaseNode     `json:"base_node,omitempty"`
+	Declarations []Node `json:"declarations,omitempty"`
 }
 
 func NewProgram() *Program {
@@ -67,8 +69,8 @@ func (p *Program) String() string {
 }
 
 type Comment struct {
-	BaseNode
-	Words []Node
+	BaseNode `json:"base_node,omitempty"`
+	Words    []Node `json:"words,omitempty"`
 }
 
 func (c *Comment) Accept(visitor Visitor) any {
@@ -78,13 +80,21 @@ func (c *Comment) Accept(visitor Visitor) any {
 	return nil
 }
 
+func (c *Comment) MarshalJSON() ([]byte, error) {
+	data := map[string]any{
+		"node_type": "Comment",
+		"words":     c.Words,
+	}
+	return json.Marshal(&data)
+}
+
 func (c *Comment) String() string {
 	return "CommentNode"
 }
 
 type Word struct {
 	BaseNode
-	Value string
+	Value string `json:"value,omitempty"`
 }
 
 func (w *Word) String() string {
@@ -102,4 +112,12 @@ func NewWordNode(value string) *Word {
 
 func (w *Word) Accept(visitor Visitor) any {
 	return w.String()
+}
+
+func (c *Word) MarshalJSON() ([]byte, error) {
+	data := map[string]any{
+		"node_type": "Word",
+		"lexema":    c.Value,
+	}
+	return json.Marshal(&data)
 }
