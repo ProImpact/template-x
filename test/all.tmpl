@@ -1,14 +1,36 @@
-{{.Campo}}: Accede a un campo del struct de datos pasado a la plantilla. Por ejemplo, si pasas un struct con un campo Title, puedes acceder a él con .Title.
-{{/* comentario */}}: Define un comentario dentro de la plantilla. No se renderiza en la salida final.
-{{if .Condicion}} ... {{else}} ... {{end}}: Estructuras condicionales. Renderiza un bloque si la condición es verdadera, y otro si no lo es.
-{{range .SliceOrMap}} ... {{end}}: Itera sobre slices, arrays o mapas.
-{{range $index, $item := .Items}}: Para acceder tanto al índice como al valor.
-{{range .Items}}: Para acceder solo al valor (que se convierte en el contexto actual . dentro del range).
-{{with .Campo}} ... {{else}} ... {{end}}: Cambia el contexto de la plantilla al valor del campo especificado. Si el campo es nil o un valor "falso" (como una cadena vacía), se ejecuta el bloque else. Es útil para verificar la existencia de un objeto y trabajar con él directamente.
-{{template "nombre.gohtml" .Datos}}: Incluye otra plantilla definida (o un fragmento de plantilla) por su nombre, pasándole datos opcionales.
-{{funcName .Arg1 .Arg2}}: Llama a una función personalizada registrada en la plantilla. formatDate y toUpper son ejemplos de funciones que tendrías que registrar en tu código Go.
-Pipelines (|): Puedes encadenar funciones. Por ejemplo, {{.Price | printf "%.2f"}} pasa el valor de .Price a la función printf con el formato especificado.
+DONE: {{.Campo}}: Accede a un campo del struct de datos pasado a la plantilla. Por ejemplo, si pasas un struct con un campo Title, puedes acceder a él con .Title.
+DONE: {{/* comentario */}}: Define un comentario dentro de la plantilla. No se renderiza en la salida final.
+DONE: {{if .Condicion}} ... {{else}} ... {{end}}: Estructuras condicionales. Renderiza un bloque si la condición es verdadera, y otro si no lo es.
+DONE: {{range .SliceOrMap}} ... {{end}}: Itera sobre slices, arrays o mapas.
+DONE: {{range $index, $item := .Items}}: Para acceder tanto al índice como al valor.
+DONE: {{range .Items}}: Para acceder solo al valor (que se convierte en el contexto actual . dentro del range).
+DONE: {{template "nombre.gohtml" .Datos}}: Incluye otra plantilla definida (o un fragmento de plantilla) por su nombre, pasándole datos opcionales.
+DONE: {{funcName .Arg1 .Arg2}}: Llama a una función personalizada registrada en la plantilla. formatDate y toUpper son ejemplos de funciones que tendrías que registrar en tu código Go.
+DONE: REMOVED -> FUNCTION Pipelines (|): Puedes encadenar funciones. Por ejemplo, {{.Price | printf "%.2f"}} pasa el valor de .Price a la función printf con el formato especificado.
 Escapado automático: Por defecto, html/template escapa automáticamente el HTML y los scripts para prevenir ataques XSS.
 {{.UnescapedText}} (si UnescapedText contiene <script>, se convertirá en &lt;script&gt;).
 Para insertar HTML "seguro" que sabes que es fiable, debes usar tipos específicos de Go como template.HTML, template.CSS, template.template.JS, etc. En el ejemplo, {{.TrustedHTML}} asumiría que TrustedHTML es de tipo template.HTML.
 El contenido dentro de las etiquetas <script> es tratado especialmente y escapado de forma segura para JavaScript si viene de variables.
+MISSING:
+{{ block "template" . }} can be parsed as a regular template call
+
+{{ end }}
+
+
+MISSING: {{ break }}
+
+MISSING: {{ continue }}
+
+.Name[0].User["anthony"]
+
+@func()
+
+{{/* Hola es to es un simple comentario  */}}
+{{ var user = @getStatus(.Getter) }}
+{{ if .Name == @isAlfo(.Name) }}
+    {{ template "template" . }}
+{{ elif .Hernesto == 21 or .IsMarried == false }} 
+    {{ for i, n in .Checks }}
+        <h1> {{ n.Value[0] }} is mine {{ @timeDiff(n.Time) }} <h2>
+    {{{ end}}
+{{ end }}

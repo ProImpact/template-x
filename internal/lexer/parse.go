@@ -171,6 +171,9 @@ func (t *Lexer) handleSpecialCharacters(char rune) (*Node, error) {
 	case '.':
 		t.LineIndex++
 		return &Node{NodeType: DOT, Lexema: string(char), LineIndex: t.LineIndex, LineNumber: t.LineNumber}, nil
+	case '@':
+		t.LineIndex++
+		return &Node{NodeType: ARROBA, Lexema: string(char), LineIndex: t.LineIndex, LineNumber: t.LineNumber}, nil
 	case '{':
 		t.LineIndex++
 		return &Node{NodeType: LBRACE, Lexema: string(char), LineIndex: t.LineIndex, LineNumber: t.LineNumber}, nil

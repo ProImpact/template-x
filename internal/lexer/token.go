@@ -5,29 +5,31 @@ import "slices"
 type TokenType int
 
 const (
-	_             TokenType = iota
-	TEXT                    // "name"
-	SLASH                   // /
-	ASTERISIC               // *
-	DOLLAR                  // $
-	COLON                   // :
-	LBRACE                  // {
-	RBRACE                  // }
-	LPARENT                 // (
-	RPARENT                 // )
-	LCORCH                  // [
-	RCORCH                  // ]
-	INDENTIFIER             // variable name
-	NUMBER                  // 21, 40
-	DOBLE_EQUALS            // ==
-	NOT_EQUALS              // !=
-	GRATER                  // >
-	GRATER_EQUALS           // >=
-	LOWER_EQUALS            // <=
-	LOWER                   // <
-	COMMA                   // ,
-	DOT                     // .
-	EQUALS                  // =
+	_           TokenType = iota
+	TEXT                  // "name"
+	SLASH                 // /
+	ASTERISIC             // *
+	DOLLAR                // $
+	COLON                 // :
+	LBRACE                // {
+	RBRACE                // }
+	LPARENT               // (
+	RPARENT               // )
+	LCORCH                // [
+	RCORCH                // ]
+	INDENTIFIER           // variable name
+	NUMBER                // 21, 40
+	FLOAT
+	ARROBA        // @
+	DOBLE_EQUALS  // ==
+	NOT_EQUALS    // !=
+	GRATER        // >
+	GRATER_EQUALS // >=
+	LOWER_EQUALS  // <=
+	LOWER         // <
+	COMMA         // ,
+	DOT           // .
+	EQUALS        // =
 	KEYWORD
 	LINE
 	ERROR
